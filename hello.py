@@ -1,9 +1,21 @@
 from datetime import datetime
-from flask import Flask, render_template, request, make_response, redirect, abort
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
+
 app = Flask(__name__)
+
+# Chave ultra secreta
+app.config['SECRET_KEY'] = 'chaveultrasecreta'
+
+# Classe do formulário
+class NameForm(FlaskForm):
+    name = StringField('Qual o seu nome?', validators=[DataRequired()])
+    submit = SubmitField('Enviar')
 
 # Iniciando extensões
 bootstrap = Bootstrap(app)
@@ -38,6 +50,29 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
+
+# FORMULÁRIO
+@app.route('/formulario', methods=['GET', 'POST'])
+def formulario():
+    form = NameForm()
+    
+    if form.validate_on_submit():
+        old_name = session.get('name')
+        
+        if old_name is not None and old_name != form.name.data:
+            flash('Parece que você alterou seu nome!')
+        
+        
+        session['name'] = form.name.data
+        
+        return redirect(url_for('formulario'))
+    
+    
+    return render_template('formulario.html', form=form, name=session.get('name'))
+
+
+
+
 
 # Ativação local
 if __name__ == '__main__':

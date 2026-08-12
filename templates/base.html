@@ -30,11 +30,10 @@
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li><a href="{{ url_for('index') }}">Home</a></li>
-                
                 <!-- Lembrar de passar a variável, quando necessário -->
                 <li><a href="{{ url_for('user', name='Mario Bordignon') }}">Identificação</a></li>
-                
                 <li><a href="{{ url_for('contextorequisicao', name='Mario Bordignon') }}">Contexto da requisição</a></li>
+                <li><a href="{{ url_for('formulario') }}">Formulário</a></li>
             </ul>
         </div>
     </div>
