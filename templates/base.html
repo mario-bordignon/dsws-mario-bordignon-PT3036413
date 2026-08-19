@@ -24,16 +24,13 @@
             </button>
             
             <!-- Passando a utilizar url_for -->
-            <a class="navbar-brand" href="{{ url_for('index') }}">Avaliação contínua: <strong>Aula 040</strong></a>
+            <a class="navbar-brand" href="{{ url_for('index') }}">Avaliação contínua: <strong>Aula 050.B</strong></a>
         </div>
         
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li><a href="{{ url_for('index') }}">Home</a></li>
-                <!-- Lembrar de passar a variável, quando necessário -->
-                <li><a href="{{ url_for('user', name='Mario Bordignon') }}">Identificação</a></li>
-                <li><a href="{{ url_for('contextorequisicao', name='Mario Bordignon') }}">Contexto da requisição</a></li>
-                <li><a href="{{ url_for('formulario') }}">Formulário</a></li>
+                <li><a href="{{ url_for('login') }}">Login</a></li>
             </ul>
         </div>
     </div>
@@ -44,6 +41,10 @@
 {% block content %}
 <div class="container">
     {% block page_content %}{% endblock %}
+    
+    <br><br>
+    <p>The local date and time is {{ moment(current_time).format('LLL') }}.</p>
+    <p>That was {{ moment(current_time).fromNow(refresh=True) }}.</p>
 </div>
 {% endblock %}
 
