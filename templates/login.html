@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<div class="row">
+    <div class="col-md-4 col-md-offset-4">
+        <div class="panel panel-default" style="margin-top: 20px;">
+            <div class="panel-body">
+                <h2>Login:</h2>
+                <br>
+                
+                <form method="POST" action="{{ url_for('login') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-group">
+                        {{ form.usuario(class="form-control", placeholder="Usuário ou e-mail") }}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.senha(class="form-control", placeholder="Informe a sua senha") }}
+                    </div>
+                    
+                    {{ form.submit(class="btn btn-primary") }}
+                </form>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
