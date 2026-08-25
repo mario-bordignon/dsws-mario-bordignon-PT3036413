@@ -30,7 +30,7 @@ class InfoForm(FlaskForm):
     )
     submit = SubmitField('Submit')
 
-# Classe de Login
+# Classe de Login Forms
 class LoginForm(FlaskForm):
     usuario = StringField('Usuário ou e-mail', validators=[DataRequired()])
     senha = PasswordField('Informe a sua senha', validators=[DataRequired()])
