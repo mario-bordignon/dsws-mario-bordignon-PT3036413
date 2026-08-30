@@ -11,7 +11,17 @@
 {% endfor %}
 
 <div class="page-header">
-    <h1>Olá, {{ prontuario }} {{ nome }}!</h1>
+{% if nome_completo %}
+    <h1>Olá, {{ nome_completo }}!</h1>
+    {% if not known %}
+        <p>Prazer em te conhecer!</p>
+    {% else %}
+        <p>Bom te ver novamente!</p>
+    {% endif %}
+{% else %}
+    <h1>Olá Estranho!</h1>
+    <p>Qual o seu nome?</p>
+{% endif %}
 </div>
 
 <p style="font-size: 20px;">A sua Instituição de ensino é {{ instituicao }}</p>

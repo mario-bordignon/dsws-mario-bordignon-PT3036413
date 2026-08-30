@@ -7,25 +7,33 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField, PasswordField
 from wtforms.validators import DataRequired
 
+import os
+from flask_sqlalchemy import SQLAlchemy
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+
 app = Flask(__name__)
 
 # Chave ultra secreta
 app.config['SECRET_KEY'] = 'chaveultrasecreta'
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
 # region CLASSES
 # Classe do formulário
 class InfoForm(FlaskForm):
-    nome = StringField('Informe o seu nome:', validators=[DataRequired()])
-    sobrenome = StringField('Informe o seu sobrenome:', validators=[DataRequired()])
+    nome_completo = StringField('Informe o seu nome completo:', validators=[DataRequired()])
     instituicao = StringField('Informe a sua instituição de ensino:', validators=[DataRequired()])
     
     disciplina = SelectField('Informe a sua disciplina:', choices=[
         ('', 'Escolha uma opção'),
-        ('DWBC', 'DWBC'), # (Valor, Rótulo)
+        ('DWBC', 'DWBC'),
         ('PABD', 'PABD'), 
         ('DSWS', 'DSWS')
     ],
-        # Mensagem de erro (apenas a fim de UX)
         validators=[DataRequired(message="Por favor, selecione uma disciplina válida na lista.")]
     )
     submit = SubmitField('Submit')
@@ -41,6 +49,30 @@ class LoginForm(FlaskForm):
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 
+# Modelo de Cargos/Papéis
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    
+    # Relacionamento: Uma Role pode estar ligada a vários Users
+    users = db.relationship('User', backref='role', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Role {self.name}>'
+
+# Modelo de Usuários (Atualizado)
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, index=True)
+    
+    # Chave estrangeira apontando para o id da tabela roles
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
 # Relógio global
 @app.context_processor
 def inject_time():
@@ -51,40 +83,35 @@ def inject_time():
 def index():
     form = InfoForm()
     
-    # SE formulário enviado: atualiza dados
     if form.validate_on_submit():
-        old_nome = session.get('nome')
+        # Consulta no banco de dados
+        user = User.query.filter_by(username=form.nome_completo.data).first()
         
-        # Nome novo?
-        if old_nome is not None and old_nome != form.nome.data:
-            flash('Parece que você alterou o seu nome!')
+        if user is None:
+            user = User(username=form.nome_completo.data)
+            db.session.add(user)
+            db.session.commit()
+            session['known'] = False
+        else:
+            session['known'] = True
             
-        session['nome'] = form.nome.data
-        session['sobrenome'] = form.sobrenome.data
+        # Atualiza a sessão
+        session['nome_completo'] = form.nome_completo.data
         session['instituicao'] = form.instituicao.data
         session['disciplina'] = form.disciplina.data
         return redirect(url_for('index'))
     
-    # Lembrei do uso de IF NOT no python e pesquisando vi que daria para utilizar aqui também, então usei para remover os "nones"
-    if not session.get('nome'):
-        session['nome'] = 'Mario'
-        session['sobrenome'] = 'Bordignon'
-        session['instituicao'] = 'IFSP'
-        session['disciplina'] = 'Escolha uma opção'
-        
-    # Coletando os dados do contexto da requisição
     ip_cliente = request.remote_addr
     host_app = request.host
         
-    # Renderiza a página enviando todas as variáveis necessárias[cite: 3]
     return render_template('index.html', 
                            form=form, 
-                           nome=session.get('nome'),
-                           sobrenome=session.get('sobrenome'),
+                           nome_completo=session.get('nome_completo'),
                            instituicao=session.get('instituicao'),
                            disciplina=session.get('disciplina'),
                            ip_cliente=ip_cliente,
-                           host_app=host_app,)
+                           host_app=host_app,
+                           known=session.get('known', False))
 
 # LOGIN
 @app.route('/login', methods=['GET', 'POST'])
