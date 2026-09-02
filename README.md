@@ -1,15 +1,15 @@
 # Desenvolvimento web com flask
 
-# Preparando o ambiente
+## Preparando o ambiente
 -> Criar Venv: python -m venv venv
 -> work on venv: .\venv\Scripts\Activate.ps1
 -> Baixar arquivos: pip install -r requirements/common.txt
 
-# Criando DB
+## Criando DB
 -> variável de acesso: $env:FLASK_APP = "hello.py"
     • flask shell
     • db.create_all()
     • exit()
 
-# Iniciando localmente
+## Iniciando localmente
 -> flask --app hello run --debug
