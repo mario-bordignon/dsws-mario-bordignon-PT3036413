@@ -10,6 +10,7 @@
     • flask shell
     • db.create_all()
     • exit()
+[setattr(u, 'role', Role.query.filter_by(name='User').first()) for u in User.query.filter_by(role_id=None).all()]; db.session.commit()
 
 ## Iniciando localmente
 -> flask --app hello run --debug
