@@ -36,14 +36,8 @@ from hello import db, Role, User
 # Cria as tabelas no banco de dados
 db.create_all()
 
-# Garante a existência das funções básicas
-[db.session.add(Role(name=n)) for n in ['User', 'Administrator'] if not Role.query.filter_by(name=n).first()]
-db.session.commit()
-
 # Associa a função padrão 'User' para qualquer registro sem função
-user_role = Role.query.filter_by(name='User').first()
-[setattr(u, 'role', user_role) for u in User.query.filter_by(role_id=None).all()]
-db.session.commit()
+[setattr(u, 'role', Role.query.filter_by(name='User').first()) for u in User.query.filter_by(role_id=None).all()]; db.session.commit()
 
 exit()
 ```
