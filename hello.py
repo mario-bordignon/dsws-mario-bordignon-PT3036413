@@ -1,4 +1,6 @@
-# --- IMPORTAÇÕES DO FLASK ---
+# =====================
+# IMPORTAÇÕES DO FLASK 
+# =====================
 # region
 
 # --- Bibliotecas padrão Python ---
@@ -26,8 +28,9 @@ from flask_migrate import Migrate
 
 
 
-
-# --- CONFIGURAÇÕES BÁSICAS ---
+# ======================
+# CONFIGURAÇÕES BÁSICAS
+# ======================
 # region
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -41,8 +44,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 
-
-# --- INICIANDO EXTENSÕES ---
+# ====================
+# INICIANDO EXTENSÕES 
+# =====================
 # region
 
 db = SQLAlchemy(app)
@@ -55,8 +59,9 @@ migrate = Migrate(app, db)
 
 
 
-
-# --- CLASSES WTFORMS ---
+# ================
+# CLASSES WTFORMS
+# ================
 # region
 
 class NameForm(FlaskForm):
@@ -69,8 +74,9 @@ class NameForm(FlaskForm):
 
 
 
-
-# --- MODELOS DB SQLALCHEMY ---
+# =====================
+# MODELOS DB SQLALCHEMY 
+# ======================
 # region
 
 # --- Cargos ---
@@ -92,7 +98,6 @@ class User(db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
-    
 # endregion
 
 

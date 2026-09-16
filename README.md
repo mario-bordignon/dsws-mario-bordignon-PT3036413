@@ -11,6 +11,11 @@ Crie o ambiente virtual na raiz:
 python -m venv venv
 ```
 
+Conceda permissão:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
 Ative o ambiente virtual:
 ```powershell
 .\venv\Scripts\Activate.ps1
