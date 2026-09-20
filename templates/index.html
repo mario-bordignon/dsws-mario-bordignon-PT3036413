@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+<!-- FLASH -->
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
+<div class="page-header">
+{% if nome_completo %}
+    <h1>Olá, {{ nome_completo }}!</h1>
+    {% if not known %}
+        <p>Prazer em te conhecer!</p>
+    {% else %}
+        <p>Bom te ver novamente!</p>
+    {% endif %}
+{% else %}
+    <h1>Olá estranho!</h1>
+    <p>Qual o seu nome?</p>
+{% endif %}
+</div>
+
+{{ wtf.quick_form(form) }}
+
+
+{% endblock %}
