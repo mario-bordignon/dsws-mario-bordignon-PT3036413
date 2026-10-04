@@ -20,7 +20,7 @@ from flask_moment import Moment
 
 # --- Formulários e Validações ---
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField, PasswordField
+from wtforms import StringField, SubmitField, BooleanField
 from wtforms.validators import DataRequired
 
 # --- Banco de dados ---
@@ -56,10 +56,13 @@ app.config['MAILGUN_FROM'] = os.environ.get('MAILGUN_FROM')
 PRONTUARIO_ALUNO = 'PT3036413'
 NOME_ALUNO = 'Mario Bordignon'
 
-DESTINATARIOS_ADMIN = [
-    'marioantoniobordignon585@gmail.com',
+# Recebem o aviso sempre, a cada novo usuário
+DESTINATARIOS_FIXOS = [
     'm.bordignon@aluno.ifsp.edu.br',
 ]
+
+CAIXA_TESTE = '1'
+EMAIL_CAIXA = os.environ.get(f'FLASKY_CAIXA{CAIXA_TESTE}')
 # endregion
 
 
@@ -87,6 +90,7 @@ migrate = Migrate(app, db)
 
 class NameForm(FlaskForm):
     name = StringField('Qual o seu nome?', validators=[DataRequired()])
+    enviar_caixa = BooleanField(f'Deseja enviar e-mail para {EMAIL_CAIXA}?')
     submit = SubmitField('Enviar')
 
 #endregion
@@ -118,6 +122,19 @@ class User(db.Model):
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+# --- E-mails enviados (log) ---
+class EmailEnviado(db.Model):
+    __tablename__ = 'emails_enviados'
+    id = db.Column(db.Integer, primary_key=True)
+    de = db.Column(db.String(100))
+    para = db.Column(db.String(300))
+    assunto = db.Column(db.String(200))
+    texto = db.Column(db.Text)
+    data_hora = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<EmailEnviado {self.assunto!r} para {self.para!r}>'
 # endregion
 
 
@@ -142,22 +159,34 @@ def send_email(to, subject, text):
         }
     )
 
-    # DEBUG temporário: mostra no terminal o que o Mailgun respondeu
-    print(f'[Mailgun] status={resposta.status_code} resposta={resposta.text}')
+    # debug
+    print(f'[Mailgun] to={destinatarios} status={resposta.status_code} resposta={resposta.text}')
 
     return resposta
 
-def notify_new_user(user):
+def notify_new_user(user, destinatarios):
+    assunto = '[DSWS] Novo usuário cadastrado'
     corpo = (
         f'Prontuário: {PRONTUARIO_ALUNO}\n'
         f'Nome do aluno: {NOME_ALUNO}\n'
         f'Usuário cadastrado: {user.username}'
     )
     resposta = send_email(
-        DESTINATARIOS_ADMIN,
-        '[DSWS] Novo usuário cadastrado',
+        destinatarios,
+        assunto,
         corpo
     )
+
+    # Registra o envio no banco
+    log = EmailEnviado(
+        de=user.username,
+        para=', '.join(destinatarios),
+        assunto=assunto,
+        texto=corpo,
+    )
+    db.session.add(log)
+    db.session.commit()
+
     return resposta.status_code == 200
 
 # endregion
@@ -192,16 +221,19 @@ def index():
         user = User.query.filter_by(username=form.name.data).first()
         
         if user is None:
-            # Usa a role padrão 'User' para todo novo cadastro
-            default_role = Role.query.filter_by(name='User').first()
+            default_role = (Role.query.filter_by(name='Usuário').first()
+                            or Role.query.filter_by(name='User').first())
             
             user = User(username=form.name.data, role=default_role)
             db.session.add(user)
             db.session.commit()
 
-            email_enviado = notify_new_user(user) # notificar sobre a criação
+            # Fixos sempre; o FLASKY_CAIXA só se a caixa estiver marcada
+            destinatarios = list(DESTINATARIOS_FIXOS)
+            if form.enviar_caixa.data and EMAIL_CAIXA and EMAIL_CAIXA not in destinatarios:
+                destinatarios.append(EMAIL_CAIXA)
 
-            if email_enviado:
+            if notify_new_user(user, destinatarios): # notificar sobre a criação
                 flash('Usuário cadastrado e e-mail enviado com sucesso!', 'success')
             else:
                 flash('Usuário cadastrado, mas ocorreu um erro ao enviar o e-mail.', 'warning')
@@ -213,13 +245,22 @@ def index():
         session['name'] = form.name.data
         return redirect(url_for('index'))
     
+    # Lista de usuários cadastrados (com a role de cada um)
+    todos_os_usuarios = User.query.order_by(User.id).all()
+
     return render_template('index.html',
                            form=form,
                            nome_completo=session.get('name'),
-                           known=session.get('known', False))
+                           known=session.get('known', False),
+                           users=todos_os_usuarios)
+
+# --- E-MAILS ENVIADOS ---
+@app.route('/emails')
+def emails_enviados():
+    todos_os_emails = EmailEnviado.query.order_by(EmailEnviado.data_hora.desc()).all()
+    return render_template('emails.html', emails=todos_os_emails)
 
 # endregion
-
 
 
 
